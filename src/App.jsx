@@ -34,7 +34,9 @@ export default function App() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [entries, setEntries] = useState([]);
   const [form, setForm] = useState(emptyForm());
+  const [filterType, setFilterType] = useState("month");
   const [filterMonth, setFilterMonth] = useState(todayISO().slice(0, 7));
+  const [filterYear, setFilterYear] = useState(todayISO().slice(0, 4));
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -162,9 +164,15 @@ export default function App() {
 
   const filteredEntries = useMemo(() => {
     return entries
-      .filter((e) => e.data?.startsWith(filterMonth))
+      .filter((e) => {
+        if (filterType === "year") {
+          return e.data?.startsWith(filterYear);
+        }
+
+        return e.data?.startsWith(filterMonth);
+      })
       .sort((a, b) => b.data.localeCompare(a.data));
-  }, [entries, filterMonth]);
+  }, [entries, filterMonth, filterYear, filterType]);
 
   const stats = useMemo(() => {
     return {
@@ -488,14 +496,37 @@ export default function App() {
               <h2>Histórico</h2>
             </div>
 
-            <label className="field">
-              <span>Mês</span>
-              <input
-                type="month"
-                value={filterMonth}
-                onChange={(e) => setFilterMonth(e.target.value)}
-              />
-            </label>
+            <div className="filter-grid">
+              <label className="field">
+                <span>Visualização</span>
+                <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                  <option value="month">Mensal</option>
+                  <option value="year">Anual</option>
+                </select>
+              </label>
+
+              {filterType === "month" ? (
+                <label className="field">
+                  <span>Mês</span>
+                  <input
+                    type="month"
+                    value={filterMonth}
+                    onChange={(e) => setFilterMonth(e.target.value)}
+                  />
+                </label>
+              ) : (
+                <label className="field">
+                  <span>Ano</span>
+                  <input
+                    type="number"
+                    min="2020"
+                    max="2100"
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                  />
+                </label>
+              )}
+            </div>
 
             <div className="actions">
               <button className="btn secondary" type="button" onClick={loadEntries}>↻ Atualizar</button>
