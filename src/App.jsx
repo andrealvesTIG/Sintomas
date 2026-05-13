@@ -46,11 +46,8 @@ export default function App() {
       .select("*")
       .order("data", { ascending: false });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setEntries(data || []);
-    }
+    if (error) setError(error.message);
+    else setEntries(data || []);
 
     setLoading(false);
   }
@@ -82,6 +79,7 @@ export default function App() {
       intensidade: entry.intensidade || "leve",
       notas: entry.notas || ""
     });
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -121,11 +119,15 @@ export default function App() {
       result = await supabase
         .from(TABLE_NAME)
         .update(payload)
-        .eq("id", form.id);
+        .eq("id", form.id)
+        .select()
+        .single();
     } else {
       result = await supabase
         .from(TABLE_NAME)
-        .upsert(payload, { onConflict: "data" });
+        .upsert(payload, { onConflict: "data" })
+        .select()
+        .single();
     }
 
     if (result.error) {
@@ -188,6 +190,9 @@ export default function App() {
 
   return (
     <main className="page">
+      <div className="background-decoration one" />
+      <div className="background-decoration two" />
+
       <div className="container">
         <motion.header
           initial={{ opacity: 0, y: -12 }}
@@ -196,13 +201,14 @@ export default function App() {
         >
           <div className="header-row">
             <div>
-              <p className="muted">Uso interno · tabela online Supabase</p>
+              <p className="eyebrow">Uso interno · tabela online Supabase</p>
               <h1>Registo de sintomas</h1>
               <p className="muted">
-                Regista os dias com vómitos, dor de cabeça, dor de barriga e sonolência.
+                Regista os dias com vómitos, dor de cabeça, dor de barriga e
+                sonolência.
               </p>
             </div>
-            <div className="header-icon">📅</div>
+            <div className="header-icon">🩺</div>
           </div>
         </motion.header>
 
@@ -218,7 +224,10 @@ export default function App() {
 
         <section className="grid-main">
           <div className="card">
-            <h2>{form.id ? "✎ Editar registo" : "＋ Novo registo"}</h2>
+            <div className="section-title">
+              <span className="section-icon">{form.id ? "✎" : "＋"}</span>
+              <h2>{form.id ? "Editar registo" : "Novo registo"}</h2>
+            </div>
 
             <form onSubmit={saveEntry}>
               <label className="field">
@@ -231,17 +240,35 @@ export default function App() {
               </label>
 
               <div className="symptoms">
-                <Checkbox label="Vomitou" checked={form.vomito} onChange={(v) => setForm({ ...form, vomito: v })} />
-                <Checkbox label="Dor de cabeça" checked={form.dor_cabeca} onChange={(v) => setForm({ ...form, dor_cabeca: v })} />
-                <Checkbox label="Dor de barriga" checked={form.dor_barriga} onChange={(v) => setForm({ ...form, dor_barriga: v })} />
-                <Checkbox label="Sonolência" checked={form.sonolencia} onChange={(v) => setForm({ ...form, sonolencia: v })} />
+                <Checkbox
+                  label="Vomitou"
+                  checked={form.vomito}
+                  onChange={(v) => setForm({ ...form, vomito: v })}
+                />
+                <Checkbox
+                  label="Dor de cabeça"
+                  checked={form.dor_cabeca}
+                  onChange={(v) => setForm({ ...form, dor_cabeca: v })}
+                />
+                <Checkbox
+                  label="Dor de barriga"
+                  checked={form.dor_barriga}
+                  onChange={(v) => setForm({ ...form, dor_barriga: v })}
+                />
+                <Checkbox
+                  label="Sonolência"
+                  checked={form.sonolencia}
+                  onChange={(v) => setForm({ ...form, sonolencia: v })}
+                />
               </div>
 
               <label className="field">
                 <span>Intensidade geral</span>
                 <select
                   value={form.intensidade}
-                  onChange={(e) => setForm({ ...form, intensidade: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, intensidade: e.target.value })
+                  }
                 >
                   <option value="leve">Leve</option>
                   <option value="moderada">Moderada</option>
@@ -261,11 +288,19 @@ export default function App() {
 
               <div className="actions">
                 <button className="btn" type="submit" disabled={saving}>
-                  {saving ? "A guardar..." : form.id ? "Guardar alterações" : "Guardar registo"}
+                  {saving
+                    ? "A guardar..."
+                    : form.id
+                    ? "Guardar alterações"
+                    : "Guardar registo"}
                 </button>
 
                 {form.id && (
-                  <button className="btn secondary" type="button" onClick={cancelEdit}>
+                  <button
+                    className="btn secondary"
+                    type="button"
+                    onClick={cancelEdit}
+                  >
                     Cancelar edição
                   </button>
                 )}
@@ -274,7 +309,10 @@ export default function App() {
           </div>
 
           <div className="card">
-            <h2>📊 Histórico</h2>
+            <div className="section-title">
+              <span className="section-icon">📊</span>
+              <h2>Histórico</h2>
+            </div>
 
             <label className="field">
               <span>Mês</span>
@@ -286,17 +324,26 @@ export default function App() {
             </label>
 
             <div className="actions">
-              <button className="btn secondary" type="button" onClick={loadEntries}>↻ Atualizar</button>
-              <button className="btn secondary" type="button" onClick={exportCSV}>↓ CSV</button>
+              <button className="btn secondary" type="button" onClick={loadEntries}>
+                ↻ Atualizar
+              </button>
+              <button className="btn secondary" type="button" onClick={exportCSV}>
+                ↓ CSV
+              </button>
             </div>
 
             {loading ? (
-              <p className="muted">A carregar registos...</p>
+              <p className="empty-state">A carregar registos...</p>
             ) : filteredEntries.length === 0 ? (
               <p className="empty-state">Ainda não há registos neste mês.</p>
             ) : (
               filteredEntries.map((entry) => (
-                <EntryCard key={entry.id} entry={entry} onEdit={startEdit} onDelete={deleteEntry} />
+                <EntryCard
+                  key={entry.id}
+                  entry={entry}
+                  onEdit={startEdit}
+                  onDelete={deleteEntry}
+                />
               ))
             )}
           </div>
@@ -311,6 +358,7 @@ function StatCard({ label, value }) {
     <div className="stat-card">
       <p className="muted">{label}</p>
       <div className="stat-value">{value}</div>
+      <div className="stat-bar" />
     </div>
   );
 }
@@ -319,7 +367,11 @@ function Checkbox({ label, checked, onChange }) {
   return (
     <label className="check">
       <span>{label}</span>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
     </label>
   );
 }
@@ -336,14 +388,22 @@ function EntryCard({ entry, onEdit, onDelete }) {
     <div className="entry">
       <div className="entry-top">
         <div>
-          <strong>{new Date(entry.data + "T00:00:00").toLocaleDateString("pt-PT")}</strong>
-          <p className="muted">{symptoms.join(" · ") || "Sem sintomas assinalados"}</p>
+          <strong>
+            {new Date(entry.data + "T00:00:00").toLocaleDateString("pt-PT")}
+          </strong>
+          <p className="muted">
+            {symptoms.join(" · ") || "Sem sintomas assinalados"}
+          </p>
           <p className="muted">Intensidade: {entry.intensidade}</p>
         </div>
 
         <div className="actions">
-          <button className="btn secondary" type="button" onClick={() => onEdit(entry)}>Editar</button>
-          <button className="btn danger" type="button" onClick={() => onDelete(entry.id)}>🗑️</button>
+          <button className="btn secondary" type="button" onClick={() => onEdit(entry)}>
+            Editar
+          </button>
+          <button className="btn danger" type="button" onClick={() => onDelete(entry.id)}>
+            Apagar
+          </button>
         </div>
       </div>
 
