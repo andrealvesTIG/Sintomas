@@ -26,6 +26,12 @@ function emptyForm() {
 }
 
 export default function App() {
+  const [session, setSession] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginSent, setLoginSent] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [entries, setEntries] = useState([]);
   const [form, setForm] = useState(emptyForm());
   const [filterMonth, setFilterMonth] = useState(todayISO().slice(0, 7));
@@ -34,8 +40,110 @@ export default function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    loadEntries();
+    async function initAuth() {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setCheckingAuth(false);
+    }
+
+    initAuth();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      checkAuthorization(session.user.email);
+    } else {
+      setIsAuthorized(false);
+      setEntries([]);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      loadEntries();
+    }
+  }, [isAuthorized]);
+
+  async function checkAuthorization(email) {
+    setError("");
+
+    const { data, error } = await supabase
+      .from("utilizadores_autorizados")
+      .select("email")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) {
+      setError(error.message);
+      setIsAuthorized(false);
+      return;
+    }
+
+    setIsAuthorized(Boolean(data));
+  }
+
+  async function signInWithEmail(e) {
+    e.preventDefault();
+    setError("");
+    setLoginSent(false);
+    setLoginLoading(true);
+
+    const email = loginEmail.trim().toLowerCase();
+
+    if (!email) {
+      setError("Introduz um email válido.");
+      setLoginLoading(false);
+      return;
+    }
+
+    const { data: allowedEmail, error: allowedError } = await supabase
+      .from("utilizadores_autorizados")
+      .select("email")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (allowedError) {
+      setError(allowedError.message);
+      setLoginLoading(false);
+      return;
+    }
+
+    if (!allowedEmail) {
+      setError("Este email não está autorizado a usar a aplicação.");
+      setLoginLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + window.location.pathname
+      }
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setLoginSent(true);
+    }
+
+    setLoginLoading(false);
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setForm(emptyForm());
+    setEntries([]);
+    setError("");
+  }
 
   async function loadEntries() {
     setLoading(true);
@@ -188,6 +296,91 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  if (checkingAuth) {
+    return (
+      <main className="page">
+        <div className="container">
+          <div className="card">
+            <h2>A verificar autenticação...</h2>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!session) {
+    return (
+      <main className="page">
+        <div className="background-decoration one" />
+        <div className="background-decoration two" />
+
+        <div className="container auth-container">
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="header auth-card"
+          >
+            <div className="header-icon">🩺</div>
+            <p className="eyebrow">Acesso privado</p>
+            <h1>Registo de sintomas</h1>
+            <p className="muted">
+              Introduz um dos emails autorizados. Vais receber um link de entrada no email.
+            </p>
+
+            {error && <div className="error">⚠️ {error}</div>}
+
+            {loginSent && (
+              <div className="success">
+                Link enviado. Abre o email no mesmo dispositivo e clica no link para entrar.
+              </div>
+            )}
+
+            <form onSubmit={signInWithEmail} className="auth-form">
+              <label className="field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="exemplo@gmail.com"
+                  autoComplete="email"
+                />
+              </label>
+
+              <button className="btn" type="submit" disabled={loginLoading}>
+                {loginLoading ? "A enviar..." : "Enviar link de entrada"}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <main className="page">
+        <div className="background-decoration one" />
+        <div className="background-decoration two" />
+
+        <div className="container auth-container">
+          <div className="header auth-card">
+            <div className="header-icon">🔒</div>
+            <p className="eyebrow">Sem autorização</p>
+            <h1>Acesso bloqueado</h1>
+            <p className="muted">
+              A conta {session.user.email} não está autorizada a usar esta aplicação.
+            </p>
+            {error && <div className="error">⚠️ {error}</div>}
+            <button className="btn secondary" type="button" onClick={signOut}>
+              Sair
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="page">
       <div className="background-decoration one" />
@@ -204,11 +397,16 @@ export default function App() {
               <p className="eyebrow">Uso interno · tabela online Supabase</p>
               <h1>Registo de sintomas</h1>
               <p className="muted">
-                Regista os dias com vómitos, dor de cabeça, dor de barriga e
-                sonolência.
+                Sessão iniciada como {session.user.email}. Regista os dias com vómitos,
+                dor de cabeça, dor de barriga e sonolência.
               </p>
             </div>
-            <div className="header-icon">🩺</div>
+            <div className="header-actions">
+              <div className="header-icon">🩺</div>
+              <button className="btn secondary" type="button" onClick={signOut}>
+                Sair
+              </button>
+            </div>
           </div>
         </motion.header>
 
@@ -240,35 +438,17 @@ export default function App() {
               </label>
 
               <div className="symptoms">
-                <Checkbox
-                  label="Vomitou"
-                  checked={form.vomito}
-                  onChange={(v) => setForm({ ...form, vomito: v })}
-                />
-                <Checkbox
-                  label="Dor de cabeça"
-                  checked={form.dor_cabeca}
-                  onChange={(v) => setForm({ ...form, dor_cabeca: v })}
-                />
-                <Checkbox
-                  label="Dor de barriga"
-                  checked={form.dor_barriga}
-                  onChange={(v) => setForm({ ...form, dor_barriga: v })}
-                />
-                <Checkbox
-                  label="Sonolência"
-                  checked={form.sonolencia}
-                  onChange={(v) => setForm({ ...form, sonolencia: v })}
-                />
+                <Checkbox label="Vomitou" checked={form.vomito} onChange={(v) => setForm({ ...form, vomito: v })} />
+                <Checkbox label="Dor de cabeça" checked={form.dor_cabeca} onChange={(v) => setForm({ ...form, dor_cabeca: v })} />
+                <Checkbox label="Dor de barriga" checked={form.dor_barriga} onChange={(v) => setForm({ ...form, dor_barriga: v })} />
+                <Checkbox label="Sonolência" checked={form.sonolencia} onChange={(v) => setForm({ ...form, sonolencia: v })} />
               </div>
 
               <label className="field">
                 <span>Intensidade geral</span>
                 <select
                   value={form.intensidade}
-                  onChange={(e) =>
-                    setForm({ ...form, intensidade: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, intensidade: e.target.value })}
                 >
                   <option value="leve">Leve</option>
                   <option value="moderada">Moderada</option>
@@ -288,19 +468,11 @@ export default function App() {
 
               <div className="actions">
                 <button className="btn" type="submit" disabled={saving}>
-                  {saving
-                    ? "A guardar..."
-                    : form.id
-                    ? "Guardar alterações"
-                    : "Guardar registo"}
+                  {saving ? "A guardar..." : form.id ? "Guardar alterações" : "Guardar registo"}
                 </button>
 
                 {form.id && (
-                  <button
-                    className="btn secondary"
-                    type="button"
-                    onClick={cancelEdit}
-                  >
+                  <button className="btn secondary" type="button" onClick={cancelEdit}>
                     Cancelar edição
                   </button>
                 )}
@@ -324,12 +496,8 @@ export default function App() {
             </label>
 
             <div className="actions">
-              <button className="btn secondary" type="button" onClick={loadEntries}>
-                ↻ Atualizar
-              </button>
-              <button className="btn secondary" type="button" onClick={exportCSV}>
-                ↓ CSV
-              </button>
+              <button className="btn secondary" type="button" onClick={loadEntries}>↻ Atualizar</button>
+              <button className="btn secondary" type="button" onClick={exportCSV}>↓ CSV</button>
             </div>
 
             {loading ? (
@@ -338,12 +506,7 @@ export default function App() {
               <p className="empty-state">Ainda não há registos neste mês.</p>
             ) : (
               filteredEntries.map((entry) => (
-                <EntryCard
-                  key={entry.id}
-                  entry={entry}
-                  onEdit={startEdit}
-                  onDelete={deleteEntry}
-                />
+                <EntryCard key={entry.id} entry={entry} onEdit={startEdit} onDelete={deleteEntry} />
               ))
             )}
           </div>
@@ -367,11 +530,7 @@ function Checkbox({ label, checked, onChange }) {
   return (
     <label className="check">
       <span>{label}</span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     </label>
   );
 }
@@ -388,22 +547,14 @@ function EntryCard({ entry, onEdit, onDelete }) {
     <div className="entry">
       <div className="entry-top">
         <div>
-          <strong>
-            {new Date(entry.data + "T00:00:00").toLocaleDateString("pt-PT")}
-          </strong>
-          <p className="muted">
-            {symptoms.join(" · ") || "Sem sintomas assinalados"}
-          </p>
+          <strong>{new Date(entry.data + "T00:00:00").toLocaleDateString("pt-PT")}</strong>
+          <p className="muted">{symptoms.join(" · ") || "Sem sintomas assinalados"}</p>
           <p className="muted">Intensidade: {entry.intensidade}</p>
         </div>
 
         <div className="actions">
-          <button className="btn secondary" type="button" onClick={() => onEdit(entry)}>
-            Editar
-          </button>
-          <button className="btn danger" type="button" onClick={() => onDelete(entry.id)}>
-            Apagar
-          </button>
+          <button className="btn secondary" type="button" onClick={() => onEdit(entry)}>Editar</button>
+          <button className="btn danger" type="button" onClick={() => onDelete(entry.id)}>Apagar</button>
         </div>
       </div>
 
