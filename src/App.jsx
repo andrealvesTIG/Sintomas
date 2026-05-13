@@ -387,6 +387,13 @@ export default function App() {
       <div className="background-decoration two" />
 
       <div className="container">
+        <div className="topbar">
+          <span>{session.user.email}</span>
+          <button className="btn secondary compact" type="button" onClick={signOut}>
+            Sair
+          </button>
+        </div>
+
         <motion.header
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -401,12 +408,7 @@ export default function App() {
                 dor de cabeça, dor de barriga e sonolência.
               </p>
             </div>
-            <div className="header-actions">
-              <div className="header-icon">🩺</div>
-              <button className="btn secondary" type="button" onClick={signOut}>
-                Sair
-              </button>
-            </div>
+            <div className="header-icon">🩺</div>
           </div>
         </motion.header>
 
