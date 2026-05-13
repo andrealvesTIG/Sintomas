@@ -12,14 +12,29 @@
   --primary-dark: #1d4ed8;
   --danger: #dc2626;
   --danger-light: #fef2f2;
+  --success: #166534;
+  --success-bg: #dcfce7;
   --shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
-body {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
   margin: 0;
+  min-height: 100%;
+}
+
+body {
   font-family: Inter, Arial, sans-serif;
   background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 45%, #fdf2f8 100%);
   color: var(--text);
+  overflow-x: hidden;
 }
 
 button,
@@ -48,6 +63,7 @@ button {
   filter: blur(40px);
   opacity: 0.3;
   pointer-events: none;
+  z-index: 0;
 }
 
 .background-decoration.one {
@@ -67,6 +83,17 @@ button {
   z-index: 1;
   max-width: 1100px;
   margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .header,
@@ -218,7 +245,10 @@ textarea {
   background: white;
   color: var(--text);
   outline: none;
-  transition: border 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
 
 input:focus,
@@ -257,6 +287,7 @@ textarea {
   border-radius: 15px;
   background: white;
   font-weight: 700;
+  border: 1px solid #edf2f7;
 }
 
 .check input {
@@ -279,7 +310,10 @@ textarea {
   color: white;
   font-weight: 800;
   box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .btn:hover {
@@ -315,12 +349,24 @@ textarea {
   background: #fee2e2;
 }
 
+.btn.compact {
+  padding: 9px 13px;
+}
+
 .entry {
   padding: 16px;
   margin-bottom: 12px;
   border: 1px solid var(--border);
   border-radius: 22px;
   background: white;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.entry:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.06);
 }
 
 .entry-top {
@@ -344,6 +390,7 @@ textarea {
   border-radius: 16px;
   background: #f8fafc;
   color: #334155;
+  line-height: 1.5;
 }
 
 .error {
@@ -356,12 +403,51 @@ textarea {
   font-weight: 700;
 }
 
+.success {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid #86efac;
+  border-radius: 18px;
+  background: var(--success-bg);
+  color: var(--success);
+  font-weight: 700;
+}
+
 .empty-state {
   padding: 18px;
   border-radius: 18px;
   background: #f8fafc;
   color: var(--muted);
   text-align: center;
+}
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 48px);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.auth-card .header-icon {
+  margin: 0 auto 20px;
+}
+
+.auth-card .btn {
+  width: 100%;
+}
+
+.auth-form {
+  margin-top: 18px;
+}
+
+.auth-form .field {
+  text-align: left;
 }
 
 @media (max-width: 900px) {
@@ -393,5 +479,26 @@ textarea {
   input[type="month"] {
     width: 100%;
     font-size: 16px;
+  }
+
+  .topbar {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .grid-stats {
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions .btn {
+    flex: 1;
   }
 }
