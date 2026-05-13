@@ -297,13 +297,13 @@ export default function App() {
         .update(payload)
         .eq("id", form.id)
         .select()
-        .single();
+        .maybeSingle();
     } else {
       result = await supabase
         .from(TABLE_NAME)
         .upsert(payload, { onConflict: "data" })
         .select()
-        .single();
+        .maybeSingle();
     }
 
     if (result.error) {
