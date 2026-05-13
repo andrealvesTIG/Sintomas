@@ -184,6 +184,62 @@ export default function App() {
     };
   }, [filteredEntries]);
 
+  const yearlyEntries = useMemo(() => {
+    return entries.filter((e) => e.data?.startsWith(filterYear));
+  }, [entries, filterYear]);
+
+  const monthlyChartData = useMemo(() => {
+    const months = [
+      "Jan",
+      "Fev",
+      "Mar",
+      "Abr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Set",
+      "Out",
+      "Nov",
+      "Dez"
+    ];
+
+    return months.map((label, index) => {
+      const monthNumber = String(index + 1).padStart(2, "0");
+      const count = yearlyEntries.filter((e) => e.data?.slice(5, 7) === monthNumber).length;
+      return { label, count };
+    });
+  }, [yearlyEntries]);
+
+  const frequencyAnalysis = useMemo(() => {
+    if (yearlyEntries.length === 0) {
+      return {
+        lastEpisodeText: "Sem registos neste ano.",
+        frequencyText: "Ainda não há dados suficientes para avaliar frequência.",
+        patternText: "Quando existirem mais registos, a app ajuda a perceber se há meses com maior concentração."
+      };
+    }
+
+    const sorted = [...yearlyEntries].sort((a, b) => a.data.localeCompare(b.data));
+    const last = sorted[sorted.length - 1];
+    const daysSinceLast = Math.floor((new Date(todayISO()) - new Date(last.data)) / (1000 * 60 * 60 * 24));
+    const averagePerMonth = yearlyEntries.length / 12;
+    const maxMonth = monthlyChartData.reduce((max, item) => (item.count > max.count ? item : max), monthlyChartData[0]);
+
+    let frequencyText = "Frequência baixa no ano selecionado.";
+    if (averagePerMonth >= 2) {
+      frequencyText = "Frequência elevada: em média há 2 ou mais registos por mês no ano selecionado.";
+    } else if (averagePerMonth >= 1) {
+      frequencyText = "Frequência moderada: em média há pelo menos 1 registo por mês no ano selecionado.";
+    }
+
+    return {
+      lastEpisodeText: `Último registo: ${new Date(last.data + "T00:00:00").toLocaleDateString("pt-PT")} (${daysSinceLast} dias atrás).`,
+      frequencyText,
+      patternText: maxMonth.count > 0 ? `Mês com mais registos: ${maxMonth.label}, com ${maxMonth.count} registo(s).` : "Sem padrão mensal visível."
+    };
+  }, [yearlyEntries, monthlyChartData]);
+
   function startEdit(entry) {
     setForm({
       id: entry.id,
@@ -542,6 +598,49 @@ export default function App() {
                 <EntryCard key={entry.id} entry={entry} onEdit={startEdit} onDelete={deleteEntry} />
               ))
             )}
+          </div>
+        </section>
+
+        <section className="card analysis-card">
+          <div className="section-title">
+            <span className="section-icon">📈</span>
+            <h2>Análise anual</h2>
+          </div>
+
+          <p className="muted">
+            Esta análise usa o ano selecionado no filtro do histórico: {filterYear}.
+          </p>
+
+          <div className="chart">
+            {monthlyChartData.map((item) => {
+              const max = Math.max(...monthlyChartData.map((month) => month.count), 1);
+              const height = Math.max((item.count / max) * 140, item.count > 0 ? 12 : 4);
+
+              return (
+                <div className="chart-item" key={item.label}>
+                  <div className="chart-value">{item.count}</div>
+                  <div className="chart-bar-wrap">
+                    <div className="chart-bar" style={{ height: `${height}px` }} />
+                  </div>
+                  <div className="chart-label">{item.label}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="analysis-grid">
+            <div className="analysis-box">
+              <strong>Último episódio</strong>
+              <p>{frequencyAnalysis.lastEpisodeText}</p>
+            </div>
+            <div className="analysis-box">
+              <strong>Frequência</strong>
+              <p>{frequencyAnalysis.frequencyText}</p>
+            </div>
+            <div className="analysis-box">
+              <strong>Padrão possível</strong>
+              <p>{frequencyAnalysis.patternText}</p>
+            </div>
           </div>
         </section>
       </div>
