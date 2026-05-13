@@ -20,6 +20,7 @@ function emptyForm() {
     dor_cabeca: false,
     dor_barriga: false,
     sonolencia: false,
+    tomou_medicacao: false,
     intensidade: "leve",
     notas: ""
   };
@@ -248,6 +249,7 @@ export default function App() {
       dor_cabeca: Boolean(entry.dor_cabeca),
       dor_barriga: Boolean(entry.dor_barriga),
       sonolencia: Boolean(entry.sonolencia),
+      tomou_medicacao: Boolean(entry.tomou_medicacao),
       intensidade: entry.intensidade || "leve",
       notas: entry.notas || ""
     });
@@ -268,6 +270,7 @@ export default function App() {
       form.dor_cabeca ||
       form.dor_barriga ||
       form.sonolencia ||
+      form.tomou_medicacao ||
       form.notas.trim();
 
     if (!hasSymptom) return;
@@ -281,6 +284,7 @@ export default function App() {
       dor_cabeca: form.dor_cabeca,
       dor_barriga: form.dor_barriga,
       sonolencia: form.sonolencia,
+      tomou_medicacao: form.tomou_medicacao,
       intensidade: form.intensidade,
       notas: form.notas.trim()
     };
@@ -332,6 +336,7 @@ export default function App() {
       "dor_cabeca",
       "dor_barriga",
       "sonolencia",
+      "tomou_medicacao",
       "intensidade",
       "notas"
     ];
@@ -344,6 +349,7 @@ export default function App() {
         e.dor_cabeca ? "sim" : "nao",
         e.dor_barriga ? "sim" : "nao",
         e.sonolencia ? "sim" : "nao",
+        e.tomou_medicacao ? "sim" : "nao",
         e.intensidade,
         `"${String(e.notas || "").replaceAll('"', '""')}"`
       ]);
@@ -508,6 +514,7 @@ export default function App() {
                 <Checkbox label="Dor de cabeça" checked={form.dor_cabeca} onChange={(v) => setForm({ ...form, dor_cabeca: v })} />
                 <Checkbox label="Dor de barriga" checked={form.dor_barriga} onChange={(v) => setForm({ ...form, dor_barriga: v })} />
                 <Checkbox label="Sonolência" checked={form.sonolencia} onChange={(v) => setForm({ ...form, sonolencia: v })} />
+                <Checkbox label="Tomou medicação" checked={form.tomou_medicacao} onChange={(v) => setForm({ ...form, tomou_medicacao: v })} />
               </div>
 
               <label className="field">
@@ -672,7 +679,8 @@ function EntryCard({ entry, onEdit, onDelete }) {
     entry.vomito && "Vómitos",
     entry.dor_cabeca && "Dor de cabeça",
     entry.dor_barriga && "Dor de barriga",
-    entry.sonolencia && "Sonolência"
+    entry.sonolencia && "Sonolência",
+    entry.tomou_medicacao && "Tomou medicação"
   ].filter(Boolean);
 
   return (
