@@ -196,6 +196,7 @@ h2 {
 .field {
   display: block;
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 .field span {
@@ -209,6 +210,8 @@ input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 13px 14px;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -223,6 +226,12 @@ select:focus,
 textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+input[type="date"],
+input[type="month"] {
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 textarea {
@@ -374,5 +383,15 @@ textarea {
 
   .page {
     padding: 16px;
+  }
+
+  .card {
+    overflow: hidden;
+  }
+
+  input[type="date"],
+  input[type="month"] {
+    width: 100%;
+    font-size: 16px;
   }
 }
