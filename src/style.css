@@ -501,4 +501,15 @@ textarea {
   .actions .btn {
     flex: 1;
   }
+  .filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 700px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
 }
