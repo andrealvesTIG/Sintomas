@@ -289,25 +289,25 @@ export default function App() {
       notas: form.notas.trim()
     };
 
-    let result;
+    let error;
 
     if (form.id) {
-      result = await supabase
+      const result = await supabase
         .from(TABLE_NAME)
         .update(payload)
-        .eq("id", form.id)
-        .select()
-        .maybeSingle();
+        .eq("id", form.id);
+
+      error = result.error;
     } else {
-      result = await supabase
+      const result = await supabase
         .from(TABLE_NAME)
-        .upsert(payload, { onConflict: "data" })
-        .select()
-        .maybeSingle();
+        .upsert(payload, { onConflict: "data" });
+
+      error = result.error;
     }
 
-    if (result.error) {
-      setError(result.error.message);
+    if (error) {
+      setError(error.message);
     } else {
       setForm(emptyForm());
       await loadEntries();
