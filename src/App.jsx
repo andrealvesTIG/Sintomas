@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 // 1) Cria um projeto gratuito em https://supabase.com
 // 2) Cria a tabela com o SQL no final deste ficheiro
@@ -180,8 +178,7 @@ export default function App() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-          <Card className="rounded-3xl shadow-sm">
-            <CardContent className="p-6">
+          <div className="card"><div>
               <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
                 <span aria-hidden="true">＋</span> Novo registo
               </h2>
@@ -228,15 +225,13 @@ export default function App() {
                   />
                 </label>
 
-                <Button type="submit" disabled={saving} className="w-full rounded-2xl p-6 text-base">
+                <button type="submit" disabled={saving} className="btn">
                   {saving ? "A guardar..." : "Guardar registo"}
-                </Button>
+                </button>
               </form>
-            </CardContent>
-          </Card>
+            </div></div>
 
-          <Card className="rounded-3xl shadow-sm">
-            <CardContent className="p-6">
+          <div className="card"><div>
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <h2 className="flex items-center gap-2 text-xl font-semibold">
                   <span aria-hidden="true">📊</span> Histórico
@@ -250,12 +245,12 @@ export default function App() {
               </div>
 
               <div className="mb-4 flex flex-wrap gap-2">
-                <Button variant="outline" onClick={loadEntries} className="rounded-2xl">
+                <button type="button" onClick={loadEntries} className="btn secondary">
                   ↻ Atualizar
-                </Button>
-                <Button variant="outline" onClick={exportCSV} className="rounded-2xl">
+                </button>
+                <button type="button" onClick={exportCSV} className="btn secondary">
                   ↓ CSV
-                </Button>
+                </button>
               </div>
 
               <div className="space-y-3">
@@ -267,8 +262,7 @@ export default function App() {
                   filteredEntries.map((entry) => <EntryCard key={entry.id} entry={entry} onDelete={deleteEntry} />)
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div></div>
         </section>
       </div>
     </main>
@@ -277,12 +271,10 @@ export default function App() {
 
 function StatCard({ label, value }) {
   return (
-    <Card className="rounded-3xl shadow-sm">
-      <CardContent className="p-5">
+    <div className="card"><div>
         <p className="text-sm font-medium text-slate-500">{label}</p>
         <p className="mt-2 text-3xl font-bold">{value}</p>
-      </CardContent>
-    </Card>
+      </div></div>
   );
 }
 
@@ -316,9 +308,9 @@ function EntryCard({ entry, onDelete }) {
           <p className="mt-1 text-sm text-slate-600">{symptoms.join(" · ") || "Sem sintomas assinalados"}</p>
           <p className="mt-1 text-sm text-slate-500">Intensidade: {entry.intensidade}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)} className="rounded-full">
+        <button type="button" onClick={() => onDelete(entry.id)} className="btn danger">
           <span aria-hidden="true">🗑️</span>
-        </Button>
+        </button>
       </div>
       {entry.notas && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{entry.notas}</p>}
     </div>
